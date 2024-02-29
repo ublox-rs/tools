@@ -9,13 +9,14 @@ use ublox::*;
 use std::io::{Write, BufWriter};
 
 fn main() {
-    let matches = Command::new("uBlox CLI example program")
+    let matches = Command::new("ubx-record")
         .author(clap::crate_authors!())
-        .about("Demonstrates usage of the Rust uBlox API")
+        .about("Record UBX files from your U-Blox receiver")
         .arg_required_else_help(true)
+        .next_help_heading("Serial configuration")
         .arg(
             Arg::new("port")
-                .value_name("port")
+                .value_name("PORT")
                 .short('p')
                 .long("port")
                 .required(true)
@@ -23,7 +24,7 @@ fn main() {
         )
         .arg(
             Arg::new("baud")
-                .value_name("baud")
+                .value_name("BAUD")
                 .short('s')
                 .long("baud")
                 .required(false)
@@ -51,6 +52,16 @@ fn main() {
             Arg::new("parity")
                 .long("parity")
                 .help("Parity to use for open port")
+                .required(false)
+                .value_parser(["even", "odd"]),
+        )
+        .next_help_heading("Output file")
+        .arg(
+            Arg::new("output")
+                .short('o')
+                .long("output")
+                .value_name("FILE")
+                .help("Output file name")
                 .required(false)
                 .value_parser(["even", "odd"]),
         )

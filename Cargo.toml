@@ -3,4 +3,5 @@ resolver = "2"
 
 members = [
     "ubx-record", 
+    "ubx-read", 
 ]
