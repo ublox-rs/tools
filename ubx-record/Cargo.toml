@@ -1,0 +1,16 @@
+[package]
+authors = ["Andrei Gherghescu <andrei.github.book663@passfwd.com>", "Guillaume W. Bres <guillaume.bressaix@gmail.com>"]
+description = "Record UBX files from your U-Blox receiver"
+edition = "2021"
+name = "ubx-record"
+rust-version = "1.70"
+version = "0.0.1"
+
+[dependencies]
+ublox = "0.4"
+chrono = "0.4.29"
+serialport = "4.2.2"
+clap = {version = "4.2.7", features = ["cargo"]}
+
+[features]
+alloc = ["ublox/alloc"]
