@@ -6,7 +6,41 @@ use serialport::{
 use std::time::Duration;
 use ublox::*;
 
+use std::fs::File;
 use std::io::{Write, BufWriter};
+use flate2::{write::GzEncoder, Compression};
+
+enum BufferedWriter {
+    Plain(BufWriter<File>),
+    Gzip(BufWriter<GzEncoder<File>>),
+}
+
+impl BufferedWriter {
+    fn new(path: &str) -> Self {
+        let fd = File::create(path)
+            .expect(&format!("failed to create file \"{}\"", path));
+        if path.ends_with(".gz") {
+            Self::Gzip(BufWriter::new(GzEncoder::new(fd, Compression::new(6))))
+        } else {
+            Self::Plain(BufWriter::new(fd))
+        }
+    }
+}
+
+impl std::io::Write for BufferedWriter {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
+        match self {
+            BufferedWriter::Gzip(ref mut writer) => writer.write(buf),
+            BufferedWriter::Plain(ref mut writer) => writer.write(buf),
+        }
+    }
+    fn flush(&mut self) -> Result<(), std::io::Error> {
+        match self {
+            BufferedWriter::Gzip(ref mut writer) => writer.flush(),
+            BufferedWriter::Plain(ref mut writer) => writer.flush(),
+        }
+    }
+}
 
 fn main() {
     let matches = Command::new("ubx-record")
@@ -60,10 +94,9 @@ fn main() {
             Arg::new("output")
                 .short('o')
                 .long("output")
+                .required(false)
                 .value_name("FILE")
                 .help("Output file name")
-                .required(false)
-                .value_parser(["even", "odd"]),
         )
         .subcommand(
             Command::new("configure")
@@ -153,6 +186,14 @@ Configuration includes: protocol in/out, data-bits, stop-bits, parity, baud-rate
 
     let mut device = Device::new(port);
 
+    let path = match matches.get_one::<String>("output") {
+        Some(output) => output.to_string(),
+        None => "output.ubx.gz".to_string(),
+    };
+
+    let mut buf = [0; 2048];
+    let mut writer = BufferedWriter::new(&path);
+
     // Parse cli for configuring specific uBlox UART port
     if let Some(("configure", sub_matches)) = matches.subcommand() {
         let (port_id, port_name) = match sub_matches.get_one::<String>("port").map(|s| s.as_str()) {
@@ -239,18 +280,12 @@ Configuration includes: protocol in/out, data-bits, stop-bits, parity, baud-rate
         .expect("Unable to write request/poll for UBX-MON-VER message");
 
     // Start streaming
-    println!("uBlox device opened, streaming started...");
+    println!("uBlox device opened, streaming..");
     
-    let fd = std::fs::File::create("test.ubx")
-        .expect("failed to create output file");
-
-    let mut fd = BufWriter::new(fd);
-
-    let mut buf = [0; 2048];
     loop {
         if let Ok(size) = device.read_port(&mut buf) {
             if size > 0 {
-                if fd.write_all(&buf).is_err() {
+                if writer.write_all(&buf).is_err() {
                     println!("failed dump into file");
                 }
             }

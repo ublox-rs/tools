@@ -13,7 +13,14 @@ cargo build --release
 
 ## Command line
 
+Generate UBX file:
+
 ```bash
 ./target/relase/ubx-record -p /dev/ttyUSB0 -s 9600 -o output.ubx
 ```
 
+Generate gzip compressed UBX file:
+
+```bash
+./target/relase/ubx-record -p /dev/ttyUSB0 -s 9600 -o output.ubx.gz
+```

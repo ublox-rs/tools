@@ -10,7 +10,14 @@ cargo build --release
 
 ## Command line
 
+Parse an UBX file:
+
 ```bash
 ./target/relase/ubx-read -f /tmp/test.ubx
 ```
 
+Parse a gzip compressed UBX file:
+
+```bash
+./target/relase/ubx-read -f /tmp/test.ubx.gz
+```
